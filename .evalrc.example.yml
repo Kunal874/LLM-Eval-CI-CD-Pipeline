@@ -1,0 +1,33 @@
+version: "1"
+
+project:
+  name: "my-llm-project"
+  # URL of your running backend (self-hosted or local)
+  api_url: "http://localhost:8000"
+  # Set this in your environment or GitHub Actions secret
+  api_key: "${LLMEVAL_API_KEY}"
+
+pipeline:
+  # "rag" enables faithfulness scoring (requires context in response)
+  # "llm" skips faithfulness, scores relevancy + latency + cost only
+  type: "rag"
+  endpoint: "https://your-pipeline.example.com/query"
+  timeout_seconds: 30
+  headers:
+    Authorization: "Bearer ${PIPELINE_API_KEY}"
+
+thresholds:
+  # Only enforced if pipeline.type is "rag"
+  hallucination_rate_max: 0.05
+  faithfulness_min: 0.90
+  # Always enforced
+  relevancy_min: 0.80
+  p95_latency_ms_max: 5000
+  cost_per_query_usd_max: 0.10
+  # Set to null to disable a threshold
+  # cost_per_query_usd_max: null
+
+judge:
+  # Model used by RAGAS to score outputs. Must support OpenAI-compatible API.
+  model: "gpt-4o-mini"
+  api_key: "${OPENAI_API_KEY}"

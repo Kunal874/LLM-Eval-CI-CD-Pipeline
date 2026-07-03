@@ -1,0 +1,33 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "llmeval-api"
+version = "0.1.0"
+description = "LLM Eval backend API"
+requires-python = ">=3.11"
+dependencies = [
+    "fastapi==0.111.1",
+    "uvicorn[standard]==0.30.1",
+    "pydantic==2.7.4",
+    "pydantic-settings>=2.0.0",
+    "supabase==2.4.3",
+    "python-dotenv==1.0.1",
+    "pyyaml==6.0.1",
+    "python-multipart==0.0.9",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest==8.2.2",
+    "pytest-asyncio==0.23.7",
+    "httpx==0.27.0",
+]
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/api"]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["tests"]
