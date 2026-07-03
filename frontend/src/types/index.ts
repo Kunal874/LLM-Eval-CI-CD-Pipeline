@@ -22,30 +22,48 @@ export interface UploadResponse {
 
 export interface EvalRun {
   id: string
-  status: "running" | "completed" | "failed"
-  model_id: string
-  pipeline_url: string
+  commit_hash: string | null
+  branch: string | null
+  triggered_by: 'cli' | 'github_actions'
+  pipeline_type: 'llm' | 'rag'
+  status: 'running' | 'completed' | 'failed'
+  created_at: string
+  completed_at: string | null
+  // joined from run_aggregates
+  overall_passed?: boolean
+}
+
+export interface RunAggregate {
+  faithfulness_avg: number | null
+  relevancy_avg: number
+  p50_latency_ms: number
+  p95_latency_ms: number
+  avg_cost_usd: number | null
+  total_cost_usd: number | null
+  hallucination_rate: number | null
   total_cases: number
   passed_cases: number
   failed_cases: number
-  created_at: string
-  completed_at: string | null
-  config_snapshot: Record<string, unknown>
+  overall_passed: boolean
 }
 
 export interface CaseResult {
   id: string
-  run_id: string
   case_id: string
   question: string
   expected_answer: string
-  actual_answer: string
+  actual_answer: string | null
+  faithfulness_score: number | null
+  relevancy_score: number | null
   latency_ms: number
-  faithfulness: number | null
-  answer_relevancy: number | null
+  cost_usd: number | null
   passed: boolean
-  failure_reasons: string[]
-  created_at: string
+  error: string | null
+}
+
+export interface RunDetail {
+  run: EvalRun
+  aggregates: RunAggregate | null
 }
 
 export interface RunResultsResponse {
@@ -53,13 +71,26 @@ export interface RunResultsResponse {
   total: number
 }
 
-export interface RunAggregates {
+export interface RunsListResponse {
+  runs: EvalRun[]
+  total: number
+}
+
+export interface RunMetric {
+  id: string
+  commit_hash: string | null
+  branch: string | null
+  created_at: string
+  status: string
+  overall_passed: boolean
+  faithfulness_avg: number | null
+  relevancy_avg: number
+  p50_latency_ms: number
+  p95_latency_ms: number
+  avg_cost_usd: number | null
+  hallucination_rate: number | null
   total_cases: number
   passed_cases: number
   failed_cases: number
-  pass_rate: number
-  avg_latency_ms: number
-  p95_latency_ms: number
-  avg_faithfulness: number | null
-  avg_answer_relevancy: number | null
 }
+

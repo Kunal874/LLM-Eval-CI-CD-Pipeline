@@ -1,5 +1,13 @@
 import axios from 'axios'
-import type { TestCase, CasesResponse, UploadResponse } from '@/types'
+import type {
+  TestCase,
+  CasesResponse,
+  UploadResponse,
+  RunsListResponse,
+  RunDetail,
+  RunResultsResponse,
+  RunMetric,
+} from '@/types'
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'
 const API_KEY = process.env.NEXT_PUBLIC_API_KEY || ''
@@ -37,3 +45,24 @@ export const casesApi = {
   exportYaml: () =>
     api.get('/api/v1/cases/export/yaml', { responseType: 'blob' }),
 }
+
+// Runs API
+export const runsApi = {
+  list: (params?: { limit?: number; offset?: number }) =>
+    api.get<RunsListResponse>('/api/v1/runs', { params }),
+
+  get: (runId: string) =>
+    api.get<RunDetail>(`/api/v1/runs/${runId}`),
+
+  getResults: (runId: string, params?: {
+    failed_only?: boolean
+    sort_by?: string
+    order?: 'asc' | 'desc'
+    limit?: number
+    offset?: number
+  }) => api.get<RunResultsResponse>(`/api/v1/runs/${runId}/results`, { params }),
+
+  getMetrics: (limit = 20) =>
+    api.get<{ runs: RunMetric[] }>('/api/v1/runs/metrics', { params: { limit } }),
+}
+
