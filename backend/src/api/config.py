@@ -12,8 +12,9 @@ class Settings(BaseSettings):
         LLMEVAL_API_KEY: API key for authenticating runner/frontend requests
     """
 
-    supabase_url: str
-    supabase_service_key: str
+    supabase_url: str | None = None
+    supabase_service_key: str | None = None
+    database_url: str | None = None
     llmeval_api_key: str
 
     class Config:

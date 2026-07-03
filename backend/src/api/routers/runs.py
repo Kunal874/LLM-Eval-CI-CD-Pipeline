@@ -10,6 +10,7 @@ from api.models import (
     RunResponse,
     RunDetailResponse,
     AggregateResponse,
+    RunMetricResponse,
 )
 
 router = APIRouter(tags=["runs"], dependencies=[Depends(verify_api_key)])
@@ -69,6 +70,60 @@ async def list_runs(
         runs.append(run.model_dump())
 
     return {"runs": runs, "total": total}
+
+
+@router.get("/runs/metrics")
+async def get_run_metrics(
+    limit: int = Query(default=20, ge=1, le=50),
+):
+    """Get completed eval runs joined with their aggregate metrics."""
+    runs_result = (
+        supabase.table("eval_runs")
+        .select("*")
+        .eq("status", "completed")
+        .order("created_at", desc=True)
+        .limit(limit)
+        .execute()
+    )
+    if not runs_result.data:
+        return {"runs": []}
+
+    runs_data = runs_result.data
+    run_ids = [r["id"] for r in runs_data]
+
+    aggs_result = (
+        supabase.table("run_aggregates")
+        .select("*")
+        .in_("run_id", run_ids)
+        .execute()
+    )
+    aggs_by_run_id = {a["run_id"]: a for a in (aggs_result.data or [])}
+
+    metrics = []
+    for r in runs_data:
+        agg = aggs_by_run_id.get(r["id"])
+        if not agg:
+            continue
+        metric = RunMetricResponse(
+            id=r["id"],
+            commit_hash=r.get("commit_hash"),
+            branch=r.get("branch"),
+            created_at=r["created_at"],
+            status=r["status"],
+            overall_passed=agg["overall_passed"],
+            faithfulness_avg=agg.get("faithfulness_avg"),
+            relevancy_avg=agg["relevancy_avg"],
+            p50_latency_ms=agg["p50_latency_ms"],
+            p95_latency_ms=agg["p95_latency_ms"],
+            avg_cost_usd=agg.get("avg_cost_usd"),
+            hallucination_rate=agg.get("hallucination_rate"),
+            total_cases=agg["total_cases"],
+            passed_cases=agg["passed_cases"],
+            failed_cases=agg["failed_cases"],
+        )
+        metrics.append(metric.model_dump())
+
+    return {"runs": metrics}
 
 
 @router.get("/runs/{run_id}")

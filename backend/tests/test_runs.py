@@ -47,7 +47,7 @@ def make_mock_supabase(table_responses):
         count = len(data) if data else 0
 
         # Make all chainable methods return the chain itself
-        for method in ["select", "insert", "update", "delete", "eq", "order", "range"]:
+        for method in ["select", "insert", "update", "delete", "eq", "order", "range", "limit", "in_"]:
             getattr(chain, method).return_value = chain
 
         result = MagicMock()
@@ -165,3 +165,20 @@ async def test_create_run_no_auth(client):
         json={"pipeline_type": "llm"},
     )
     assert resp.status_code == 401
+
+
+@pytest.mark.asyncio
+async def test_get_run_metrics(client, api_key_headers, mock_table):
+    """GET /api/v1/runs/metrics returns completed runs joined with aggregates."""
+    completed_run = {**SAMPLE_RUN, "status": "completed"}
+    mock_table.configure("eval_runs", data=[completed_run])
+    mock_table.configure("run_aggregates", data=[SAMPLE_AGGREGATE])
+
+    resp = await client.get("/api/v1/runs/metrics", headers=api_key_headers)
+    assert resp.status_code == 200
+    data = resp.json()
+    assert "runs" in data
+    assert len(data["runs"]) == 1
+    assert data["runs"][0]["id"] == SAMPLE_RUN["id"]
+    assert data["runs"][0]["relevancy_avg"] == 0.88
+

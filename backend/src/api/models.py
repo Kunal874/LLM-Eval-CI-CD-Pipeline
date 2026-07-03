@@ -93,6 +93,24 @@ class RunDetailResponse(BaseModel):
     aggregates: AggregateResponse | None
 
 
+class RunMetricResponse(BaseModel):
+    id: str
+    commit_hash: str | None
+    branch: str | None
+    created_at: str
+    status: str
+    overall_passed: bool
+    faithfulness_avg: float | None
+    relevancy_avg: float
+    p50_latency_ms: int
+    p95_latency_ms: int
+    avg_cost_usd: float | None
+    hallucination_rate: float | None
+    total_cases: int
+    passed_cases: int
+    failed_cases: int
+
+
 class ResultResponse(BaseModel):
     id: str
     case_id: str

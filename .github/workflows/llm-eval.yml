@@ -1,1 +1,43 @@
-# Phase 4: GitHub Actions workflow for LLM eval CI/CD
+# Copy this file to .github/workflows/llm-eval.yml in your project repository.
+# It will run LLM evaluation on every push to main and on every pull request.
+
+name: LLM Eval
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+    branches: [main, master]
+
+jobs:
+  llm-eval:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: "pip"
+
+      - name: Install llmeval
+        run: |
+          pip install llmeval
+          # Or, if running from source in this repo:
+          # pip install -e ./runner
+
+      - name: Run eval
+        env:
+          LLMEVAL_API_KEY: ${{ secrets.LLMEVAL_API_KEY }}
+          LLMEVAL_API_URL: ${{ secrets.LLMEVAL_API_URL }}
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          PIPELINE_API_KEY: ${{ secrets.PIPELINE_API_KEY }}  # if your pipeline needs auth
+        run: llmeval run --ci --config .evalrc.yml
+
+      # The step above exits with code 1 if thresholds fail.
+      # GitHub Actions will mark the check as failed automatically.
+      # No additional step needed to block the merge.

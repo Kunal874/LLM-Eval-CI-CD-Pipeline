@@ -1,0 +1,42 @@
+# docker-compose.local.yml — local-only, no Supabase needed
+version: "3.9"
+
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: llmeval
+      POSTGRES_USER: llmeval
+      POSTGRES_PASSWORD: llmeval
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./supabase/migrations/001_initial_schema.sql:/docker-entrypoint-initdb.d/01_schema.sql
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    ports:
+      - "8000:8000"
+    environment:
+      - DATABASE_URL=postgresql://llmeval:llmeval@db:5432/llmeval
+      - LLMEVAL_API_KEY=local-dev-key
+    depends_on:
+      - db
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    ports:
+      - "3000:3000"
+    environment:
+      - NEXT_PUBLIC_API_URL=http://localhost:8000
+      - NEXT_PUBLIC_API_KEY=local-dev-key
+    depends_on:
+      - backend
+
+volumes:
+  postgres_data:
